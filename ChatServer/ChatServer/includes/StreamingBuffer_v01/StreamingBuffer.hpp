@@ -80,11 +80,3 @@ public:
 	bool isFull(void);
 }; //endClass
 #endif
-
-
-
-
-
-
-
-

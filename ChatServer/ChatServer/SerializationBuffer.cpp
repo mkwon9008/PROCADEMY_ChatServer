@@ -1,4 +1,4 @@
-#include "SerializationBuffer.hpp"
+#include "includes\SerializationBuffer_v01\SerializationBuffer.hpp"
 
 CPacket::CPacket()
 {
