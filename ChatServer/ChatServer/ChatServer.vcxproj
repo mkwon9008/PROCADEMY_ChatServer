@@ -146,9 +146,10 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ChatServer.hpp" />
+    <ClInclude Include="ClientMapManager.hpp" />
+    <ClInclude Include="includes\SerializationBuffer_v01\SerializationBuffer.hpp" />
+    <ClInclude Include="includes\StreamingBuffer_v01\StreamingBuffer.hpp" />
     <ClInclude Include="Protocol.hpp" />
-    <ClInclude Include="SerializationBuffer.hpp" />
-    <ClInclude Include="StreamingBuffer.hpp" />
     <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>

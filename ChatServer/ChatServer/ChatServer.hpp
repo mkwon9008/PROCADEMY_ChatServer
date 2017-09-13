@@ -15,7 +15,6 @@
 #include "includes\SerializationBuffer_v01\SerializationBuffer.hpp"
 #include "includes\StreamingBuffer_v01\StreamingBuffer.hpp"
 
-#define BUFSIZE 256
 #define dfRECV_BUFF 512
 
 typedef struct st_CLIENT
@@ -59,7 +58,7 @@ void NetworkProcess(void);
 void netProc_Accept(void);
 void netProc_Send(DWORD dwUserNO);
 void SelectSocket(DWORD* dwpTableNO, SOCKET* pTableSocket, FD_SET* pReadSet, FD_SET* pWriteSet);
-
+int CompleteRecvPacket(st_CLIENT* Client);
 
 st_CLIENT* FindClient(DWORD dwUserNO);
 void DisconnetClient(DWORD dwUserNO);

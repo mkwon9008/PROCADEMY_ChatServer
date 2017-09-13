@@ -19,6 +19,9 @@
     <Filter Include="SerializationBuffer">
       <UniqueIdentifier>{49ecedc9-2314-4a64-ab7d-28ebb5db54cf}</UniqueIdentifier>
     </Filter>
+    <Filter Include="MapManager">
+      <UniqueIdentifier>{c8b6a2b6-d091-4c88-b460-003a4a3ff6cf}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
@@ -27,17 +30,20 @@
     <ClInclude Include="targetver.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
-    <ClInclude Include="SerializationBuffer.hpp">
-      <Filter>SerializationBuffer</Filter>
-    </ClInclude>
-    <ClInclude Include="StreamingBuffer.hpp">
-      <Filter>StreamingBuffer</Filter>
-    </ClInclude>
     <ClInclude Include="ChatServer.hpp">
       <Filter>헤더 파일</Filter>
     </ClInclude>
     <ClInclude Include="Protocol.hpp">
       <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="ClientMapManager.hpp">
+      <Filter>MapManager</Filter>
+    </ClInclude>
+    <ClInclude Include="includes\SerializationBuffer_v01\SerializationBuffer.hpp">
+      <Filter>SerializationBuffer</Filter>
+    </ClInclude>
+    <ClInclude Include="includes\StreamingBuffer_v01\StreamingBuffer.hpp">
+      <Filter>StreamingBuffer</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

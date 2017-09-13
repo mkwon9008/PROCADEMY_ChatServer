@@ -6,14 +6,65 @@ std::map<DWORD, st_CHAT_ROOM*>	g_RoomMap;		//방 관리용 맵.
 
 SOCKET g_ListenSocket = INVALID_SOCKET;			//사용자 accept용 listenSocket.
 
-												/* 실제 서비스 시 이렇게 사용하면 절대 안됨. */
-												//유저 고유키, 방 고유 키를 만들 전역 변수, 할당 시 마다 +1 해서 사용.
+/* 실제 서비스 시 이렇게 사용하면 절대 안됨. */
+//유저 고유키, 방 고유 키를 만들 전역 변수, 할당 시 마다 +1 해서 사용.
 DWORD g_dwKey_UserNO = 1;
 DWORD g_dwKey_RoomNO = 1;
 /*********************************************/
 
+
 bool NetworkInit(void)
 {
+	WSADATA wsaData;
+	SOCKADDR_IN servAdr;
+
+	//WSAStartup()
+	if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0)
+	{
+		ErrHandling("WSAStartup() Err.");
+		return true;
+	}
+	printf("WSAStartup() OK.\n");
+
+	//1. listen() 소켓 생성.
+	//Declaration ServSock
+	g_ListenSocket = socket(PF_INET, SOCK_STREAM, 0);
+
+	//서버소켓 할당 에러체크.
+	if (g_ListenSocket == INVALID_SOCKET)
+	{
+		ErrHandling("socket() Error");
+		return true;
+	}
+	printf("socket() OK.\n");
+
+	//2. 구조체 생성.
+	//ZeroMemory로 servAddr밀고, 인자 할당.
+	memset(&servAdr, 0, sizeof(servAdr));
+	servAdr.sin_family = AF_INET;
+	servAdr.sin_addr.s_addr = htonl(INADDR_ANY);
+	servAdr.sin_port = htons(dfNETWORK_PORT);
+	printf("SETservAddr OK.\n");
+
+
+	//3. listen소켓에 구조체 적용해서 bind();
+	if (bind(g_ListenSocket, (SOCKADDR*)&servAdr, sizeof(servAdr)) == SOCKET_ERROR)
+	{
+		ErrHandling("bind() Err.");
+		return true;
+	}
+	printf("bind() OK.\n");
+
+
+	//4. binding 이 완료 된 hServSock 으로 listen() 시작.
+	//listen(소켓디스크립터, 대기 메시지 큐의 갯수);
+	if (listen(g_ListenSocket, 10) == SOCKET_ERROR)
+	{
+		ErrHandling("listen() Err.");
+		return true;
+	}
+	printf("listen() OK\n");
+
 	return false;
 }
 
@@ -120,11 +171,11 @@ void netProc_Send(DWORD dwUserNO)
 		DWORD dwError = WSAGetLastError();
 		if (dwError == WSAEWOULDBLOCK)
 		{
-			wprintf(L"[SERVER:CHAT]:netProc_Send()\t socket is WOULDBLOCK.\n");
+			wprintf(L"[SERVER:CHAT]:netProc_Send()\tsocket is WOULDBLOCK.\n");
 			return;
 		}
 
-		wprintf(L"[SERVER:CHAT]:netProc_Send socket is unknown Error.\n");
+		wprintf(L"[SERVER:CHAT]:netProc_Send()\tsocket is unknown Error.\n");
 
 		closesocket(pClient->Socket);
 		DisconnetClient(dwUserNO);
@@ -135,12 +186,73 @@ void netProc_Send(DWORD dwUserNO)
 		//send로 보낸 사이즈가 sendQueue에서 보낼사이즈 보다 크면 오류다.
 		if (iSendSize < iResult)
 		{
-
-
-			//여기까지 했음.
+			wprintf(L"[SERVER:CHAT]:netProc_Send()\tSendSize Error. UserNO:%d, SendSize:%d, SendResult:%d\n",
+				dwUserNO, iSendSize, iResult);
+			return;
+		}
+		//송신작업 완료.
+		else
+		{
+			//패킷이 와전히 전송되었다는건 아니고, 소켓버퍼에 복사를 완료했다는 의미.
+			//송신큐에서 Peek으로 빼냈던 데이터를 이제 지워주자.
+			pClient->SendQueue.RemoveData(iResult);
 		}
 	}
 
+	return;
+}
+
+void netProc_Recv(DWORD dwUserNO)
+{
+	st_CLIENT *pClient;
+	char RecvBuff[dfRECV_BUFF];
+	int iResult;
+
+	//해당 사용자 세선 찾기.
+	pClient = FindClient(dwUserNO);
+	if (pClient == nullptr)
+	{
+		return;
+	}
+
+	//받기작업.
+	iResult = recv(pClient->Socket, RecvBuff, dfRECV_BUFF, 0);
+
+	//소켓에러시 종료. 0을 받아도 종료.
+	if (iResult == SOCKET_ERROR || iResult == 0)
+	{
+		closesocket(pClient->Socket);
+		DisconnetClient(dwUserNO);
+		return;
+	}
+
+	//받은 데이터가 있을 경우.
+	if (iResult > 0)
+	{
+		//일단 RecvStreamQ에 넣는다.
+		pClient->RecvQueue.Enqueue(RecvBuff, iResult);
+
+		//패킷이 완료 되었는지 확인한다.
+		//패킷처리 중 문제가 발생한다면 종료처리 한다.
+		//패킷은 하나 이상이 버퍼에 있을 수 있으므로 반복문으로 한 번에 전부 처리해야 한다.
+		while (true)
+		{
+			iResult = CompleteRecvPacket(pClient);
+
+			//더이상 처리할 패킷 없음.
+			if (iResult == 1)
+			{
+				break;
+			}
+
+			//패킷처리 오류.
+			if (iResult == -1)
+			{
+				wprintf(L"[SERVER:CHAT]:netProc_Recv()\tPacket Error. UserNO:%d\n", dwUserNO);
+				return;
+			}
+		}
+	}
 }
 
 void SelectSocket(DWORD* dwpTableNO, SOCKET* pTableSocket, FD_SET* pReadSet, FD_SET* pWriteSet)
@@ -181,7 +293,7 @@ void SelectSocket(DWORD* dwpTableNO, SOCKET* pTableSocket, FD_SET* pReadSet, FD_
 				}
 				else
 				{
-					//netProc_Recv(dwpTableNO[iCnt]);
+					netProc_Recv(dwpTableNO[iCnt]);
 				}
 			}
 
@@ -211,6 +323,47 @@ void DisconnetClient(DWORD dwUserNO)
 
 }
 
+
+int CompleteRecvPacket(st_CLIENT* pClient)
+{
+	st_PACKET_HEADER stHeader;
+	int iRecvQSize = pClient->RecvQueue.GetUseSize();
+
+	//받은 내용을 검사해야한다. 그런데 패킷헤더 크기 이상으로 뭔가 받은경우가 아니면 
+	//그 패킷은 손상된 패킷이라 검사하지 않는다.
+
+	if (sizeof(st_PACKET_HEADER) > iRecvQSize)
+	{
+		//손상된 패킷으로 생각하고 처리하지 않음.
+		return 1;
+	}
+
+	//1. 패킷코드 검사. 
+	//Dequeue()로 검사하지 않는다. Queue 형태라서 원래 자리에 다시 되돌릴 수 없기 때문.
+	pClient->RecvQueue.Peek((char*)&stHeader, sizeof(st_PACKET_HEADER));
+	if (dfPACKET_CODE != stHeader.byCode)
+	{
+		return 0xff;
+	}
+
+	//2. 큐에 저장된 데이터가 얻고자 하는 패킷의 크기만큼 있는지 확인.
+	if ( (stHeader.wPayloadSize + sizeof(st_PACKET_HEADER) ) > (WORD)iRecvQSize)
+	{
+		//사이즈가 작다면, 패킷이 아직 완료되지 않았으므로 다음에 다시 처리한다.
+		return 1;
+	}
+
+	//위 데이터는 Peek으로 뽑아보기만 한거라서, Queue 안에서는 지워줘야함.
+	pClient->RecvQueue.RemoveData(sizeof(st_PACKET_HEADER));
+
+	//패킷처리 해줘야함.
+	CPacket clPacket;
+
+
+	//여기까지 했음.
+
+	return 1;
+}
 
 void ErrHandling(char *message)
 {
