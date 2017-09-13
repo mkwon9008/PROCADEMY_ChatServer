@@ -33,6 +33,9 @@
     <ClInclude Include="SerializationBuffer.hpp">
       <Filter>SerializationBuffer</Filter>
     </ClInclude>
+    <ClInclude Include="StreamingBuffer.hpp">
+      <Filter>StreamingBuffer</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -43,6 +46,9 @@
     </ClCompile>
     <ClCompile Include="SerializationBuffer.cpp">
       <Filter>SerializationBuffer</Filter>
+    </ClCompile>
+    <ClCompile Include="StreamingBuffer.cpp">
+      <Filter>StreamingBuffer</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
