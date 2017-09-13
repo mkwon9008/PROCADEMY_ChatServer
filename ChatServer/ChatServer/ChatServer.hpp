@@ -42,9 +42,7 @@ typedef struct st_CHAT_ROOM
 	std::list<DWORD> UserList;
 }CHATROOM;
 
-//PIXME : global variable map LINK ERROR.
-extern std::map<DWORD, st_CLIENT*>		g_ClientMap;	//努扼 包府侩 甘.
-extern std::map<DWORD, st_CHAT_ROOM*>	g_RoomMap;		//规 包府侩 甘.
+
 
 extern SOCKET g_ListenSocket;
 

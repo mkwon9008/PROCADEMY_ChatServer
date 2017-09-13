@@ -1,5 +1,8 @@
 #include "ChatServer.hpp"
 
+//PIXME : global variable map LINK ERROR.
+std::map<DWORD, st_CLIENT*>		g_ClientMap;	//클라 관리용 맵.
+std::map<DWORD, st_CHAT_ROOM*>	g_RoomMap;		//방 관리용 맵.
 
 SOCKET g_ListenSocket = INVALID_SOCKET;			//사용자 accept용 listenSocket.
 
